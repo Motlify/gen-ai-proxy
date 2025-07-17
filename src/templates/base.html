@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Proxy API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        nav {
+            background-color: #e9ecef;
+            padding: 10px 20px;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        nav a:hover {
+            background-color: #d6eaff;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: #777;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+        }
+        h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f8f9fa;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e2e6ea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        li a:hover {
+            text-decoration: underline;
+        }
+        .method-tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+        .get { background-color: #28a745; } /* Green */
+        .post { background-color: #007bff; } /* Blue */
+        .put { background-color: #ffc107; } /* Yellow */
+        .delete { background-color: #dc3545; } /* Red */
+        .patch { background-color: #6f42c1; } /* Purple */
+        .endpoint-detail {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e6ea;
+            margin-top: 20px;
+        }
+        .endpoint-detail h3 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        .endpoint-detail p {
+            margin-bottom: 10px;
+        }
+        .endpoint-detail strong {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GenAI Proxy API</h1>
+    </header>
+    <nav>
+        <a href="/ui">Home</a>
+        <a href="/swagger/index.html">Swagger Docs</a>
+    </nav>
+    <div class="container">
+        {{block "body" .}}{{end}}
+    </div>
+    <footer>
+        <p>&copy; 2023 GenAI Proxy. All rights reserved.</p>
+    </footer>
+</body>
+</html>

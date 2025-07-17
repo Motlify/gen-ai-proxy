@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Register</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div class="container mx-auto mt-10 p-4">
+        <div class="flex justify-center">
+            <div class="w-full max-w-md">
+                <div class="bg-gray-800 rounded-lg shadow-lg">
+                    <div class="p-6 text-center">
+                        <h3 class="text-2xl font-semibold">Login or Register</h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="message" class="hidden p-3 rounded-md mb-4"></div>
+
+                        <form id="loginForm">
+                            <div class="mb-4">
+                                <label for="loginUsername" class="block text-gray-300 text-sm font-bold mb-2">Username</label>
+                                <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" id="loginUsername" required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="loginPassword" class="block text-gray-300 text-sm font-bold mb-2">Password</label>
+                                <input type="password" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" id="loginPassword" required>
+                            </div>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">Login</button>
+                        </form>
+
+                        <hr class="my-6 border-gray-700">
+
+                        <form id="registerForm" class="hidden">
+                            <div class="mb-4">
+                                <label for="registerUsername" class="block text-gray-300 text-sm font-bold mb-2">Username</label>
+                                <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-green-500" id="registerUsername" required>
+                            </div>
+                            <div class="mb-6">
+                                <label for="registerPassword" class="block text-gray-300 text-sm font-bold mb-2">Password</label>
+                                <input type="password" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-green-500" id="registerPassword" required>
+                            </div>
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">Register</button>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <button id="toggleForm" class="font-bold text-blue-400 hover:text-blue-300">Switch to Register</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/ui/js/main.js"></script>
+</body>
+</html>

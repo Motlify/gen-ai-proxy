@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Proxy UI</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+    <style>
+        .glassmorphism {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .dark .glassmorphism {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .table-row-hover:hover {
+            background-color: rgba(255, 255, 255, 0.05); /* Lighter hover for dark theme */
+        }
+        .dark .table-row-hover:hover {
+            background-color: rgba(0, 0, 0, 0.3); /* Darker hover for dark theme */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans leading-normal tracking-normal">
+    <div id="app" class="container mx-auto p-4">
+        <!-- Auth Section -->
+        <div id="auth-section" class="min-h-screen flex items-center justify-center">
+            <div class="w-full max-w-md">
+                <h1 class="text-4xl font-bold mb-4 text-center">Welcome to GenAI Proxy</h1>
+                <div id="login-form" class="glassmorphism p-8 rounded-lg shadow-md mb-4">
+                    <h2 class="text-2xl font-semibold mb-6 text-center">Login</h2>
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label for="loginUsername" class="block text-sm font-bold mb-2">Username:</label>
+                            <input type="text" id="loginUsername" name="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="loginPassword" class="block text-sm font-bold mb-2">Password:</label>
+                            <input type="password" id="loginPassword" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Login</button>
+                            <a href="#" id="showRegister" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600">Don't have an account? Register</a>
+                        </div>
+                        <p id="loginMessage" class="text-red-500 text-xs italic mt-4 text-center"></p>
+                    </form>
+                </div>
+
+                <div id="register-form" class="glassmorphism p-8 rounded-lg shadow-md hidden">
+                    <h2 class="text-2xl font-semibold mb-6 text-center">Register</h2>
+                    <form id="registerForm">
+                        <div class="mb-4">
+                            <label for="registerUsername" class="block text-sm font-bold mb-2">Username:</label>
+                            <input type="text" id="registerUsername" name="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="registerPassword" class="block text-sm font-bold mb-2">Password:</label>
+                            <input type="password" id="registerPassword" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Register</button>
+                            <a href="#" id="showLogin" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600">Already have an account? Login</a>
+                        </div>
+                        <p id="registerMessage" class="text-red-500 text-xs italic mt-4 text-center"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Section -->
+        <div id="main-content" class="hidden">
+            <header class="flex justify-between items-center py-4 px-6 glassmorphism shadow-md rounded-lg mb-6">
+                <h1 class="text-3xl font-bold">GenAI Proxy Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M4 12H3m15.325 3.325l-.707.707M6.372 6.372l-.707-.707M18.364 5.636l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </button>
+                    <button id="logoutButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">Logout</button>
+                </div>
+            </header>
+
+            <nav class="glassmorphism shadow-md rounded-lg p-4 mb-6">
+                <ul class="flex space-x-4 justify-center">
+                    <li><button class="nav-button active bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-150 ease-in-out" data-section="api-keys">API Keys</button></li>
+                    <li><button class="nav-button bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out" data-section="models">Models</button></li>
+                    <li><button class="nav-button bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out" data-section="connections">Connections</button></li>
+                    <li><button class="nav-button bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out" data-section="providers">Providers</button></li>
+                    <li><button class="nav-button bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out" data-section="conversation-logs">Conversation Logs</button></li>
+                </ul>
+            </nav>
+
+            <div id="api-keys-section" class="content-section glassmorphism p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold mb-4">API Keys
+                    <button class="ml-4 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-modal-target="create-api-key-modal">+ Add API Key</button>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">ID</th>
+                                <th class="py-3 px-6 text-left">Name</th>
+                                <th class="py-3 px-6 text-left">Created At</th>
+                                <th class="py-3 px-6 text-left">Last Used At</th>
+                                <th class="py-3 px-6 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="api-key-table-body" class="text-gray-700 dark:text-gray-200 text-sm font-light">
+                            <!-- API Key rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="models-section" class="content-section glassmorphism p-6 rounded-lg shadow-md hidden">
+                <h2 class="text-2xl font-semibold mb-4">Models
+                    <button class="ml-4 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-modal-target="create-model-modal">+ Add Model</button>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">ID</th>
+                                <th class="py-3 px-6 text-left">Proxy Model ID</th>
+                                <th class="py-3 px-6 text-left">Provider Model ID</th>
+                                <th class="py-3 px-6 text-left">Connection ID</th>
+                                <th class="py-3 px-6 text-left">Price Input</th>
+                                <th class="py-3 px-6 text-left">Price Output</th>
+                                <th class="py-3 px-6 text-left">Thinking</th>
+                                <th class="py-3 px-6 text-left">Tools Usage</th>
+                                <th class="py-3 px-6 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="model-table-body" class="text-gray-700 dark:text-gray-200 text-sm font-light">
+                            <!-- Model rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="connections-section" class="content-section glassmorphism p-6 rounded-lg shadow-md hidden">
+                <h2 class="text-2xl font-semibold mb-4">Connections
+                    <button class="ml-4 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-modal-target="create-connection-modal">+ Add Connection</button>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">ID</th>
+                                <th class="py-3 px-6 text-left">Name</th>
+                                <th class="py-3 px-6 text-left">Provider</th>
+                                <th class="py-3 px-6 text-left">Created At</th>
+                                <th class="py-3 px-6 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="connection-table-body" class="text-gray-700 dark:text-gray-200 text-sm font-light">
+                            <!-- Connection rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="providers-section" class="content-section glassmorphism p-6 rounded-lg shadow-md hidden">
+                <h2 class="text-2xl font-semibold mb-4">Providers
+                    <button class="ml-4 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-modal-target="create-provider-modal">+ Add Provider</button>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">ID</th>
+                                <th class="py-3 px-6 text-left">Name</th>
+                                <th class="py-3 px-6 text-left">Type</th>
+                                <th class="py-3 px-6 text-left">Base URL</th>
+                                <th class="py-3 px-6 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="provider-table-body" class="text-gray-700 dark:text-gray-200 text-sm font-light">
+                            <!-- Provider rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="conversation-logs-section" class="content-section glassmorphism p-6 rounded-lg shadow-md hidden">
+                <h2 class="text-2xl font-semibold mb-4">Conversation Logs</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">ID</th>
+                                <th class="py-3 px-6 text-left">Connection ID</th>
+                                <th class="py-3 px-6 text-left">Model ID</th>
+                                <th class="py-3 px-6 text-left">Prompt Tokens</th>
+                                <th class="py-3 px-6 text-left">Completion Tokens</th>
+                                <th class="py-3 px-6 text-left">Request Payload</th>
+                                <th class="py-3 px-6 text-left">Response Payload</th>
+                                <th class="py-3 px-6 text-left">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conversation-log-table-body" class="text-gray-700 dark:text-gray-200 text-sm font-light">
+                            <!-- Conversation Log rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Modal Structure -->
+    <div id="genericModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3 relative">
+            <button class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl" id="closeModal">&times;</button>
+            <h3 class="text-xl font-semibold mb-4" id="modalTitle"></h3>
+            <div id="modalContent">
+                <!-- Form will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/ui/js/main.js"></script>
+</body>
+</html>

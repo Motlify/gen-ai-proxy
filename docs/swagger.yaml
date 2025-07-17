@@ -1,0 +1,769 @@
+basePath: /
+definitions:
+  api.APIKeyResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      last_used_at:
+        type: string
+      name:
+        type: string
+    type: object
+  api.ChatCompletionMessage:
+    properties:
+      content:
+        type: string
+      role:
+        type: string
+    type: object
+  api.ChatCompletionRequest:
+    properties:
+      connection_id:
+        type: string
+      messages:
+        items:
+          $ref: '#/definitions/api.ChatCompletionMessage'
+        type: array
+      model:
+        type: string
+      stream:
+        type: boolean
+      tools: {}
+    type: object
+  api.ConnectionResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+    type: object
+  api.ConversationLogResponse:
+    properties:
+      completion_tokens:
+        type: integer
+      connection_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      model_id:
+        type: string
+      prompt_tokens:
+        type: integer
+      request_payload:
+        type: string
+      response_payload:
+        type: string
+    type: object
+  api.CreateAPIKeyRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  api.CreateAPIKeyResponse:
+    properties:
+      api_key:
+        type: string
+      name:
+        type: string
+    type: object
+  api.CreateConnectionRequest:
+    properties:
+      api_key:
+        type: string
+      name:
+        type: string
+      provider_id:
+        type: string
+    required:
+    - api_key
+    - name
+    - provider_id
+    type: object
+  api.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  api.ListAPIKeysResponse:
+    properties:
+      api_keys:
+        items:
+          $ref: '#/definitions/api.APIKeyResponse'
+        type: array
+    type: object
+  api.ListConnectionsResponse:
+    properties:
+      connections:
+        items:
+          $ref: '#/definitions/api.ConnectionResponse'
+        type: array
+    type: object
+  api.ListConversationLogsResponse:
+    properties:
+      logs:
+        items:
+          $ref: '#/definitions/api.ConversationLogResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  api.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  api.LoginResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
+  api.Model:
+    properties:
+      connection_id:
+        type: string
+      id:
+        type: string
+      price_input:
+        type: number
+      price_output:
+        type: number
+      provider_model_id:
+        type: string
+      proxy_model_id:
+        type: string
+      thinking:
+        type: boolean
+      tools_usage:
+        type: boolean
+    type: object
+  api.OllamaChatRequest:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/api.ChatCompletionMessage'
+        type: array
+      model:
+        type: string
+      stream:
+        type: boolean
+      think:
+        type: boolean
+    type: object
+  api.Provider:
+    properties:
+      base_url:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  api.RegisterRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  api.UserResponse:
+    properties:
+      id:
+        description: changed from int64 to string
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Proxy server for Generative AI models.
+  license:
+    name: Apache 2.0
+  title: GenAI Proxy API
+  version: "1.0"
+paths:
+  /api/api-keys:
+    get:
+      consumes:
+      - application/json
+      description: List all API keys for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ListAPIKeysResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all API keys
+      tags:
+      - API Keys
+    post:
+      consumes:
+      - application/json
+      description: Create a new API key for the authenticated user.
+      parameters:
+      - description: API key details
+        in: body
+        name: key
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateAPIKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.CreateAPIKeyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new API key
+      tags:
+      - API Keys
+  /api/api-keys/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an API key for the authenticated user.
+      parameters:
+      - description: API Key ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an API key
+      tags:
+      - API Keys
+  /api/chat:
+    post:
+      consumes:
+      - application/json
+      description: Proxy a chat request to the Ollama API.
+      parameters:
+      - description: Ollama Chat Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.OllamaChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Proxy a chat request to Ollama
+      tags:
+      - Proxy
+  /api/connections:
+    get:
+      consumes:
+      - application/json
+      description: List all connections for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ListConnectionsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all connections
+      tags:
+      - Connections
+    post:
+      consumes:
+      - application/json
+      description: Create a new connection for the authenticated user.
+      parameters:
+      - description: Connection details
+        in: body
+        name: connection
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new connection
+      tags:
+      - Connections
+  /api/connections/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a connection for the authenticated user.
+      parameters:
+      - description: Connection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a connection
+      tags:
+      - Connections
+  /api/conversation_logs:
+    get:
+      consumes:
+      - application/json
+      description: List all conversation logs with pagination and filtering.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by model ID
+        in: query
+        name: model_id
+        type: string
+      - description: Filter by connection ID
+        in: query
+        name: connection_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ListConversationLogsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List conversation logs
+      tags:
+      - Conversation Logs
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+      description: Log in a user with a username and password to get a JWT token.
+      parameters:
+      - description: User login details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - "":
+        - ""
+      summary: Log in a user
+      tags:
+      - Users
+  /api/models:
+    get:
+      consumes:
+      - application/json
+      description: List all available models.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.Model'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all models
+      tags:
+      - Models
+    post:
+      consumes:
+      - application/json
+      description: Create a new model for a specific connection.
+      parameters:
+      - description: Model details
+        in: body
+        name: model
+        required: true
+        schema:
+          $ref: '#/definitions/api.Model'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.Model'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new model
+      tags:
+      - Models
+  /api/models/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete an existing model by ID.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Soft delete a model
+      tags:
+      - Models
+  /api/providers:
+    get:
+      consumes:
+      - application/json
+      description: List all available providers.
+      parameters:
+      - description: Provider details
+        in: body
+        name: provider
+        required: true
+        schema:
+          $ref: '#/definitions/api.Provider'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.Provider'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all providers
+      tags:
+      - Providers
+    post:
+      consumes:
+      - application/json
+      description: Create a new provider.
+      parameters:
+      - description: Provider details
+        in: body
+        name: provider
+        required: true
+        schema:
+          $ref: '#/definitions/api.Provider'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.Provider'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new provider
+      tags:
+      - Providers
+  /api/providers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a provider by ID.
+      parameters:
+      - description: Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a provider
+      tags:
+      - Providers
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with a username and password.
+      parameters:
+      - description: User registration details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/api.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - "":
+        - ""
+      summary: Register a new user
+      tags:
+      - Users
+  /v1/chat/completions:
+    post:
+      consumes:
+      - application/json
+      description: Proxy a chat completion request to the OpenAI API.
+      parameters:
+      - description: OpenAI Chat Completion Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.ChatCompletionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Proxy a chat completion request to OpenAI
+      tags:
+      - Proxy
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Enter your username and password to get a token.
+    flow: password
+    tokenUrl: /api/login
+    type: oauth2
+swagger: "2.0"

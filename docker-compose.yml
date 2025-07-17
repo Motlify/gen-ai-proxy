@@ -1,0 +1,39 @@
+services:
+  app:
+    image: ghcr.io/motlify/gen-ai-proxy/gen-ai-proxy-api:stable
+    container_name: gen-ai-proxy-app
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_USER: gen-user
+      POSTGRES_PASSWORD: gen-pass
+      POSTGRES_DB: gen-ai-proxy
+      JWT_SECRET: sKFBafnoajfowgpifvawsp
+      ENCRYPTION_KEY: z9OjLrq+jmo0zcENJapb2jauWbXP1JQSn85VUfcgaNQ=
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:13
+    hostname: db
+    container_name: gen-ai-proxy-db
+    environment:
+      POSTGRES_USER: gen-user
+      POSTGRES_PASSWORD: gen-pass
+      POSTGRES_DB: gen-ai-proxy
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

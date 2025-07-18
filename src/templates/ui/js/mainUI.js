@@ -89,6 +89,7 @@ export async function fetchModels() {
                         <td class="py-3 px-6 text-left">${model.proxy_model_id}</td>
                         <td class="py-3 px-6 text-left">${model.provider_model_id}</td>
                         <td class="py-3 px-6 text-left">${model.connection_id}</td>
+                        <td class="py-3 px-6 text-left">${model.type}</td>
                         <td class="py-3 px-6 text-left">${model.price_input}</td>
                         <td class="py-3 px-6 text-left">${model.price_output}</td>
                         <td class="py-3 px-6 text-left">${model.thinking}</td>
@@ -101,11 +102,11 @@ export async function fetchModels() {
                 });
                 addDeleteEventListeners();
             } else {
-                modelTableBody.innerHTML = `<tr><td colspan="6" class="py-3 px-6 text-center">No models found.</td></tr>`;
+                modelTableBody.innerHTML = `<tr><td colspan="9" class="py-3 px-6 text-center">No models found.</td></tr>`;
             }
         } else {
             const errorData = await response.json();
-            modelTableBody.innerHTML = `<tr><td colspan="6" class="py-3 px-6 text-center">Error: ${errorData.error || 'Failed to fetch models'}</td></tr>`;
+            modelTableBody.innerHTML = `<tr><td colspan="9" class="py-3 px-6 text-center">Error: ${errorData.error || 'Failed to fetch models'}</td></tr>`;
         }
     } catch (error) {
         console.error('Error fetching models:', error);
@@ -216,6 +217,7 @@ export async function fetchConversationLogs() {
                         <td class="py-3 px-6 text-left">${log.model_id}</td>
                         <td class="py-3 px-6 text-left">${log.prompt_tokens}</td>
                         <td class="py-3 px-6 text-left">${log.completion_tokens}</td>
+                        <td class="py-3 px-6 text-left">${log.type}</td>
                         <td class="py-3 px-6 text-left">${formatJsonPayload(log.request_payload)}</td>
                         <td class="py-3 px-6 text-left">${formatJsonPayload(log.response_payload)}</td>
                         <td class="py-3 px-6 text-left">${new Date(log.created_at).toLocaleString()}</td>
@@ -224,7 +226,7 @@ export async function fetchConversationLogs() {
                 });
                 addJsonViewEventListeners();
             } else {
-                conversationLogTableBody.innerHTML = `<tr><td colspan="8" class="py-3 px-6 text-center">No conversation logs found.</td></tr>`;
+                conversationLogTableBody.innerHTML = `<tr><td colspan="9" class="py-3 px-6 text-center">No conversation logs found.</td></tr>`;
             }
         } else {
             conversationLogTableBody.innerHTML = `<tr><td colspan="8" class="py-3 px-6 text-center">Error: ${result.error || 'Failed to fetch conversation logs'}</td></tr>`;

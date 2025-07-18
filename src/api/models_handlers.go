@@ -49,6 +49,7 @@ func (s *Service) CreateModel(c echo.Context) error {
 		PriceOutput     float64 `json:"price_output"`
 		Thinking        bool    `json:"thinking"`
 		ToolsUsage      bool    `json:"tools_usage"`
+		Type            string  `json:"type"`
 	}
 
 	if err := c.Bind(&req); err != nil {
@@ -57,6 +58,10 @@ func (s *Service) CreateModel(c echo.Context) error {
 
 	if req.ConnectionID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "connection_id is required"})
+	}
+
+	if req.Type == "" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "type is required"})
 	}
 
 	connectionID, err := uuid.Parse(req.ConnectionID)
@@ -84,6 +89,7 @@ func (s *Service) CreateModel(c echo.Context) error {
 		ToolsUsage:      req.ToolsUsage,
 		PriceInput:      mustNumeric(req.PriceInput),
 		PriceOutput:     mustNumeric(req.PriceOutput),
+		Type:            req.Type,
 	})
 	if err != nil {
 		fmt.Println("Error creating model in DB:", err)
@@ -102,9 +108,85 @@ func (s *Service) CreateModel(c echo.Context) error {
 		ToolsUsage:      createdModel.ToolsUsage,
 		PriceInput:      priceInputFloat.Float64,
 		PriceOutput:     priceOutputFloat.Float64,
+		Type:            createdModel.Type,
 	}
 
 	return c.JSON(http.StatusCreated, resp)
+}
+
+// UpdateModel godoc
+// @Summary Update a model
+// @Schemes
+// @Description Update an existing model by ID.
+// @Tags Models
+// @Accept json
+// @Produce json
+// @Param id path string true "Model ID"
+// @Param model body Model true "Model details"
+// @Success 200 {object} Model
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /api/models/{id} [put]
+func (s *Service) UpdateModel(c echo.Context) error {
+	modelIDStr := c.Param("id")
+	modelID, err := uuid.Parse(modelIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid Model ID"})
+	}
+
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "User not authenticated"})
+	}
+
+	var req struct {
+		ProviderModelID string  `json:"provider_model_id"`
+		ProxyModelID    string  `json:"proxy_model_id"`
+		PriceInput      float64 `json:"price_input"`
+		PriceOutput     float64 `json:"price_output"`
+		Thinking        bool    `json:"thinking"`
+		ToolsUsage      bool    `json:"tools_usage"`
+		Type            string  `json:"type"`
+	}
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+	}
+
+	updatedModel, err := s.db.UpdateModel(c.Request().Context(), database.UpdateModelParams{
+		ID:              pgtype.UUID{Bytes: modelID, Valid: true},
+		UserID:          userID,
+		ProxyModelID:    req.ProxyModelID,
+		ProviderModelID: req.ProviderModelID,
+		Thinking:        req.Thinking,
+		ToolsUsage:      req.ToolsUsage,
+		PriceInput:      mustNumeric(req.PriceInput),
+		PriceOutput:     mustNumeric(req.PriceOutput),
+		Type:            req.Type,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to update model"})
+	}
+
+	priceInputFloat, _ := updatedModel.PriceInput.Float64Value()
+	priceOutputFloat, _ := updatedModel.PriceOutput.Float64Value()
+
+	resp := Model{
+		ID:              updatedModel.ID,
+		ConnectionID:    updatedModel.ConnectionID,
+		ProviderModelID: updatedModel.ProviderModelID,
+		ProxyModelID:    updatedModel.ProxyModelID,
+		Thinking:        updatedModel.Thinking,
+		ToolsUsage:      updatedModel.ToolsUsage,
+		PriceInput:      priceInputFloat.Float64,
+		PriceOutput:     priceOutputFloat.Float64,
+		Type:            updatedModel.Type,
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // ListModels godoc
@@ -131,15 +213,23 @@ func (s *Service) ListModels(c echo.Context) error {
 
 	respModels := make([]Model, len(dbModels))
 	for i, m := range dbModels {
-		model, err := s.GetModelFromDB(c.Request().Context(), m.ID, userID)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to retrieve model from DB: " + err.Error()})
+		priceInputFloat, _ := m.PriceInput.Float64Value()
+		priceOutputFloat, _ := m.PriceOutput.Float64Value()
+
+		respModels[i] = Model{
+			ID:              m.ID,
+			ConnectionID:    m.ConnectionID,
+			ProviderModelID: m.ProviderModelID,
+			ProxyModelID:    m.ProxyModelID,
+			Thinking:        m.Thinking,
+			ToolsUsage:      m.ToolsUsage,
+			PriceInput:      priceInputFloat.Float64,
+			PriceOutput:     priceOutputFloat.Float64,
+			Type:            m.Type,
 		}
-		respModels[i] = model
 	}
 	return c.JSON(http.StatusOK, respModels)
 }
-
 
 // SoftDeleteModel godoc
 // @Summary Soft delete a model

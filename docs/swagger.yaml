@@ -43,25 +43,6 @@ definitions:
       provider:
         type: string
     type: object
-  api.ConversationLogResponse:
-    properties:
-      completion_tokens:
-        type: integer
-      connection_id:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      model_id:
-        type: string
-      prompt_tokens:
-        type: integer
-      request_payload:
-        type: string
-      response_payload:
-        type: string
-    type: object
   api.CreateAPIKeyRequest:
     properties:
       name:
@@ -89,6 +70,15 @@ definitions:
     - name
     - provider_id
     type: object
+  api.EmbeddingRequest:
+    properties:
+      encoding_format:
+        type: string
+      input:
+        type: string
+      model:
+        type: string
+    type: object
   api.ErrorResponse:
     properties:
       error:
@@ -108,14 +98,35 @@ definitions:
           $ref: '#/definitions/api.ConnectionResponse'
         type: array
     type: object
-  api.ListConversationLogsResponse:
+  api.ListLogsResponse:
     properties:
       logs:
         items:
-          $ref: '#/definitions/api.ConversationLogResponse'
+          $ref: '#/definitions/api.LogResponse'
         type: array
       total:
         type: integer
+    type: object
+  api.LogResponse:
+    properties:
+      completion_tokens:
+        type: integer
+      connection_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      model_id:
+        type: string
+      prompt_tokens:
+        type: integer
+      request_payload:
+        type: string
+      response_payload:
+        type: string
+      type:
+        type: string
     type: object
   api.LoginRequest:
     properties:
@@ -150,6 +161,8 @@ definitions:
         type: boolean
       tools_usage:
         type: boolean
+      type:
+        type: string
     type: object
   api.OllamaChatRequest:
     properties:
@@ -426,54 +439,6 @@ paths:
       summary: Delete a connection
       tags:
       - Connections
-  /api/conversation_logs:
-    get:
-      consumes:
-      - application/json
-      description: List all conversation logs with pagination and filtering.
-      parameters:
-      - default: 1
-        description: Page number
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: Number of items per page
-        in: query
-        name: limit
-        type: integer
-      - description: Filter by model ID
-        in: query
-        name: model_id
-        type: string
-      - description: Filter by connection ID
-        in: query
-        name: connection_id
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ListConversationLogsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: List conversation logs
-      tags:
-      - Conversation Logs
   /api/login:
     post:
       consumes:
@@ -512,6 +477,54 @@ paths:
       summary: Log in a user
       tags:
       - Users
+  /api/logs:
+    get:
+      consumes:
+      - application/json
+      description: List all logs with pagination and filtering.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by model ID
+        in: query
+        name: model_id
+        type: string
+      - description: Filter by connection ID
+        in: query
+        name: connection_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ListLogsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List logs
+      tags:
+      - Logs
   /api/models:
     get:
       consumes:
@@ -601,6 +614,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Soft delete a model
+      tags:
+      - Models
+    put:
+      consumes:
+      - application/json
+      description: Update an existing model by ID.
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Model details
+        in: body
+        name: model
+        required: true
+        schema:
+          $ref: '#/definitions/api.Model'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.Model'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a model
       tags:
       - Models
   /api/providers:
@@ -755,7 +812,39 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Proxy a chat completion request to OpenAI
+      summary: Proxy a chat completion request to OpenAI Compatible endpoint
+      tags:
+      - Proxy
+  /v1/embeddings:
+    post:
+      consumes:
+      - application/json
+      description: Proxy embedding request to the OpenAI API.
+      parameters:
+      - description: OpenAI Embedding Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.EmbeddingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Proxy embedding request to OpenAI Compatible endpoint
       tags:
       - Proxy
 schemes:

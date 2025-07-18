@@ -26,14 +26,6 @@ WHERE user_id = $1 AND deleted_at IS NULL;
 SELECT id, user_id, provider_id, encrypted_api_key, name, created_at, deleted_at FROM connections
 WHERE provider_id = $1 AND user_id = $2 AND deleted_at IS NULL;
 
--- name: UpdateConnection :one
-UPDATE connections
-SET
-    encrypted_api_key = $2,
-    name = $3
-WHERE name = $1 AND user_id = $4
-RETURNING id, user_id, provider_id, encrypted_api_key, name, created_at;
-
 -- name: SoftDeleteConnection :exec
 UPDATE connections
 SET deleted_at = NOW()

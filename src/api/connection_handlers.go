@@ -7,17 +7,16 @@ import (
 
 	"gen-ai-proxy/src/database"
 	"gen-ai-proxy/src/encryption"
-	"github.com/labstack/echo/v4"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/labstack/echo/v4"
 )
-
 
 type ConnectionResponse struct {
 	ID        pgtype.UUID `json:"id"`
-	Provider  string    `json:"provider"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
+	Provider  string      `json:"provider"`
+	Name      string      `json:"name"`
+	CreatedAt time.Time   `json:"created_at"`
 }
 
 type ListConnectionsResponse struct {
@@ -34,6 +33,7 @@ type UpdateConnectionRequest struct {
 	Name   string `json:"name" binding:"required"`
 	APIKey string `json:"api_key" binding:"required"`
 }
+
 // ListConnections godoc
 // @Summary List all connections
 // @Schemes
@@ -69,8 +69,6 @@ func (s *Service) ListConnections(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, ListConnectionsResponse{Connections: connections})
 }
-
-
 
 // CreateConnection godoc
 // @Summary Create a new connection
@@ -141,7 +139,6 @@ func (s *Service) CreateConnection(c echo.Context) error {
 	})
 }
 
-
 // DeleteConnection godoc
 // @Summary Delete a connection
 // @Schemes
@@ -173,7 +170,7 @@ func (s *Service) DeleteConnection(c echo.Context) error {
 	}
 
 	err = s.db.SoftDeleteConnection(c.Request().Context(), database.SoftDeleteConnectionParams{
-		ID: connectionID,
+		ID:     connectionID,
 		UserID: userID,
 	})
 	if err != nil {

@@ -43,6 +43,33 @@
     <div class="container mx-auto mt-6 p-4">
         <div id="dashboardContent" class="bg-gray-800 p-6 rounded-lg shadow-lg">
             <!-- Content will be loaded here by dashboard.js -->
+            <div id="models-section" class="content-section glassmorphism p-6 rounded-lg shadow-md hidden">
+                <h2 class="text-2xl font-semibold mb-4">Models
+                    <button class="ml-4 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-modal-target="create-model-modal">+ Add Model</button>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <thead>
+                            <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-sm leading-normal">
+                                <th class="py-3 px-6 text-left">Model ID</th>
+                                <th class="py-3 px-6 text-left">Prompt Tokens</th>
+                                <th class="py-3 px-6 text-left">Provider Model ID</th>
+                                <th class="py-3 px-6 text-left">Connection ID</th>
+                                <th class="py-3 px-6 text-left">Type</th>
+                                <th class="py-3 px-6 text-left">Price Input</th>
+                                <th class="py-3 px-6 text-left">Price Output</th>
+                                <th class="py-3 px-6 text-left">Completion Tokens</th>
+                                <th class="py-3 px-6 text-left">Type</th>
+                                <th class="py-3 px-6 text-left">Request Payload">
+                                <th class="py-3 px-6 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="model-table-body" class="text-gray-700 dark:text-gray-200 text-sm font-light">
+                            <!-- Model rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 

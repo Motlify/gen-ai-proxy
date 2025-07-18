@@ -11,9 +11,10 @@ INSERT INTO models (
     thinking,
     tools_usage,
     price_input,
-    price_output
+    price_output,
+    type
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 ) RETURNING *;
 
 -- name: GetModel :one
@@ -30,7 +31,8 @@ SET
     thinking = $5,
     tools_usage = $6,
     price_input = $7,
-    price_output = $8
+    price_output = $8,
+    type = $9
 WHERE id = $1 AND user_id = $2
 RETURNING *;
 

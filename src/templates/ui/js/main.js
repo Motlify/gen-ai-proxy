@@ -159,6 +159,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         selectElement.innerHTML = '<option value="">Failed to load connections</option>';
                     }
+
+                    const modelTypeSelect = document.getElementById('model_type');
+                    const thinkingDiv = document.querySelector('div.mb-4:has(#model_thinking)');
+                    const toolsUsageDiv = document.querySelector('div.mb-4:has(#model_tools_usage)');
+
+                    const toggleThinkingTools = () => {
+                        if (modelTypeSelect.value === 'llm') {
+                            thinkingDiv.classList.remove('hidden');
+                            toolsUsageDiv.classList.remove('hidden');
+                        } else {
+                            thinkingDiv.classList.add('hidden');
+                            toolsUsageDiv.classList.add('hidden');
+                        }
+                    };
+
+                    modelTypeSelect.addEventListener('change', toggleThinkingTools);
+                    toggleThinkingTools(); // Initial call to set visibility based on default/pre-selected value
                 }
 
                 if (submitHandler) {

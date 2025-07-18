@@ -40,7 +40,7 @@ func RegisterRoutes(e *echo.Echo, s *Service) {
 	apiGroup.DELETE("/models/:id", s.SoftDeleteModel)
 
 	// Logs
-	apiGroup.GET("/conversation_logs", s.ListConversationLogs)
+	apiGroup.GET("/conversation_logs", s.ListLogs)
 
 	// Proxies
 	apiKeyGroup := e.Group("/api")
@@ -49,5 +49,6 @@ func RegisterRoutes(e *echo.Echo, s *Service) {
 
 	apiKeyGroup.POST("/chat", s.ProxyOllamaChat)
 	apiKeyGroup.POST("/v1/chat/completions", s.ProxyOpenAIChat)
+	apiKeyGroup.POST("/v1/embeddings", s.ProxyOpenAIEmbedding)
 
 }

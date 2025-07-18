@@ -27,7 +27,7 @@ type Connection struct {
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
 }
 
-type ConversationLog struct {
+type Log struct {
 	ID               pgtype.UUID        `json:"id"`
 	UserID           pgtype.UUID        `json:"user_id"`
 	ModelID          pgtype.UUID        `json:"model_id"`
@@ -37,6 +37,7 @@ type ConversationLog struct {
 	PromptTokens     pgtype.Int8        `json:"prompt_tokens"`
 	CompletionTokens pgtype.Int8        `json:"completion_tokens"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	Type             string             `json:"type"`
 }
 
 type Model struct {
@@ -50,6 +51,7 @@ type Model struct {
 	PriceInput      pgtype.Numeric     `json:"price_input"`
 	PriceOutput     pgtype.Numeric     `json:"price_output"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	Type            string             `json:"type"`
 }
 
 type Provider struct {

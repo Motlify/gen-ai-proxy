@@ -1,29 +1,31 @@
--- name: CreateConversationLog :one
-INSERT INTO conversation_logs (
+-- name: CreateLog :one
+INSERT INTO logs (
     user_id,
     model_id,
     request_payload,
     response_payload,
     prompt_tokens,
     completion_tokens,
-    connection_id
+    connection_id,
+    type
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, user_id, model_id, request_payload, response_payload, created_at, prompt_tokens, completion_tokens, connection_id;
+    $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING id, user_id, model_id, request_payload, response_payload, created_at, prompt_tokens, completion_tokens, connection_id, type;
 
--- name: ListConversationLogs :many
-SELECT id, user_id, model_id, request_payload, response_payload, created_at, prompt_tokens, completion_tokens, connection_id
-FROM conversation_logs
+-- name: ListLogs :many
+SELECT id, user_id, model_id, request_payload, response_payload, created_at, prompt_tokens, completion_tokens, connection_id, type
+FROM logs
 WHERE
     (sqlc.narg('user_id')::UUID IS NULL OR user_id = sqlc.narg('user_id')) AND
     (sqlc.narg('model_id')::UUID IS NULL OR model_id = sqlc.narg('model_id')) AND
-    (sqlc.narg('connection_id')::UUID IS NULL OR connection_id = sqlc.narg('connection_id'))
+    (sqlc.narg('connection_id')::UUID IS NULL OR connection_id = sqlc.narg('connection_id')) AND
+    (sqlc.narg('type')::TEXT IS NULL OR type = sqlc.narg('type'))
 ORDER BY created_at DESC
 LIMIT sqlc.narg('limit')::BIGINT OFFSET sqlc.narg('offset')::BIGINT;
 
--- name: CountConversationLogs :one
+-- name: CountLogs :one
 SELECT COUNT(*)
-FROM conversation_logs
+FROM logs
 WHERE
     (sqlc.narg('user_id')::UUID IS NULL OR user_id = sqlc.narg('user_id')) AND
     (sqlc.narg('model_id')::UUID IS NULL OR model_id = sqlc.narg('model_id')) AND
@@ -39,7 +41,7 @@ SELECT
     conn.name AS connection_name,
     SUM(cl.prompt_tokens + cl.completion_tokens) AS total_tokens
 FROM
-    conversation_logs cl
+    logs cl
 JOIN
     models m ON cl.model_id = m.id
 JOIN
@@ -71,7 +73,7 @@ SELECT
         (cl.completion_tokens * m.price_output)
     )::NUMERIC AS total_price
 FROM
-    conversation_logs cl
+    logs cl
 JOIN
     models m ON cl.model_id = m.id
 JOIN
@@ -100,7 +102,7 @@ SELECT
     conn.name AS connection_name,
     SUM(cl.prompt_tokens) AS total_input_tokens
 FROM
-    conversation_logs cl
+    logs cl
 JOIN
     models m ON cl.model_id = m.id
 JOIN
@@ -129,7 +131,7 @@ SELECT
     conn.name AS connection_name,
     SUM(cl.completion_tokens) AS total_output_tokens
 FROM
-    conversation_logs cl
+    logs cl
 JOIN
     models m ON cl.model_id = m.id
 JOIN

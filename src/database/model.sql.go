@@ -21,10 +21,11 @@ INSERT INTO models (
     thinking,
     tools_usage,
     price_input,
-    price_output
+    price_output,
+    type
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
-) RETURNING id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+) RETURNING id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at, type
 `
 
 type CreateModelParams struct {
@@ -37,6 +38,7 @@ type CreateModelParams struct {
 	ToolsUsage      bool           `json:"tools_usage"`
 	PriceInput      pgtype.Numeric `json:"price_input"`
 	PriceOutput     pgtype.Numeric `json:"price_output"`
+	Type            string         `json:"type"`
 }
 
 func (q *Queries) CreateModel(ctx context.Context, arg CreateModelParams) (Model, error) {
@@ -50,6 +52,7 @@ func (q *Queries) CreateModel(ctx context.Context, arg CreateModelParams) (Model
 		arg.ToolsUsage,
 		arg.PriceInput,
 		arg.PriceOutput,
+		arg.Type,
 	)
 	var i Model
 	err := row.Scan(
@@ -63,12 +66,13 @@ func (q *Queries) CreateModel(ctx context.Context, arg CreateModelParams) (Model
 		&i.PriceInput,
 		&i.PriceOutput,
 		&i.DeletedAt,
+		&i.Type,
 	)
 	return i, err
 }
 
 const getModel = `-- name: GetModel :one
-SELECT id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at FROM models WHERE id = $1 AND user_id = $2
+SELECT id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at, type FROM models WHERE id = $1 AND user_id = $2
 `
 
 type GetModelParams struct {
@@ -90,12 +94,13 @@ func (q *Queries) GetModel(ctx context.Context, arg GetModelParams) (Model, erro
 		&i.PriceInput,
 		&i.PriceOutput,
 		&i.DeletedAt,
+		&i.Type,
 	)
 	return i, err
 }
 
 const getModelByProxyModelID = `-- name: GetModelByProxyModelID :one
-SELECT id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at FROM models WHERE proxy_model_id = $1 AND user_id = $2
+SELECT id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at, type FROM models WHERE proxy_model_id = $1 AND user_id = $2
 `
 
 type GetModelByProxyModelIDParams struct {
@@ -117,12 +122,13 @@ func (q *Queries) GetModelByProxyModelID(ctx context.Context, arg GetModelByProx
 		&i.PriceInput,
 		&i.PriceOutput,
 		&i.DeletedAt,
+		&i.Type,
 	)
 	return i, err
 }
 
 const listModels = `-- name: ListModels :many
-SELECT id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at FROM models WHERE user_id = $1 AND deleted_at IS NULL
+SELECT id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at, type FROM models WHERE user_id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) ListModels(ctx context.Context, userID pgtype.UUID) ([]Model, error) {
@@ -145,6 +151,7 @@ func (q *Queries) ListModels(ctx context.Context, userID pgtype.UUID) ([]Model, 
 			&i.PriceInput,
 			&i.PriceOutput,
 			&i.DeletedAt,
+			&i.Type,
 		); err != nil {
 			return nil, err
 		}
@@ -180,9 +187,10 @@ SET
     thinking = $5,
     tools_usage = $6,
     price_input = $7,
-    price_output = $8
+    price_output = $8,
+    type = $9
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at
+RETURNING id, user_id, connection_id, proxy_model_id, provider_model_id, thinking, tools_usage, price_input, price_output, deleted_at, type
 `
 
 type UpdateModelParams struct {
@@ -194,6 +202,7 @@ type UpdateModelParams struct {
 	ToolsUsage      bool           `json:"tools_usage"`
 	PriceInput      pgtype.Numeric `json:"price_input"`
 	PriceOutput     pgtype.Numeric `json:"price_output"`
+	Type            string         `json:"type"`
 }
 
 func (q *Queries) UpdateModel(ctx context.Context, arg UpdateModelParams) (Model, error) {
@@ -206,6 +215,7 @@ func (q *Queries) UpdateModel(ctx context.Context, arg UpdateModelParams) (Model
 		arg.ToolsUsage,
 		arg.PriceInput,
 		arg.PriceOutput,
+		arg.Type,
 	)
 	var i Model
 	err := row.Scan(
@@ -219,6 +229,7 @@ func (q *Queries) UpdateModel(ctx context.Context, arg UpdateModelParams) (Model
 		&i.PriceInput,
 		&i.PriceOutput,
 		&i.DeletedAt,
+		&i.Type,
 	)
 	return i, err
 }

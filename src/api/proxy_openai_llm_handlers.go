@@ -3,12 +3,14 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 
 	"gen-ai-proxy/src/database"
+	"gen-ai-proxy/src/encryption"
 	"gen-ai-proxy/src/llm"
 
 	"github.com/google/uuid"
@@ -16,43 +18,41 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type OllamaChatRequest struct {
-	Model    string                  `json:"model"`
-	Messages []ChatCompletionMessage `json:"messages"`
-	Stream   bool                    `json:"stream"`
-	Think    bool                    `json:"think,omitempty"`
+type OpenAILLMChoice struct {
+	Index        int                   `json:"index"`
+	Message      ChatCompletionMessage `json:"message"`
+	FinishReason string                `json:"finish_reason"`
 }
 
-type OllamaResponse struct {
-	Model           string    `json:"model"`
-	CreatedAt       string    `json:"created_at"`
-	Message         Message   `json:"message"`
-	Done            bool      `json:"done"`
-	TotalDuration   int64     `json:"total_duration"`
-	LoadDuration    int64     `json:"load_duration"`
-	PromptEvalCount int32     `json:"prompt_eval_count"`
-	EvalCount       int32     `json:"eval_eval_count"`
+type OpenAILLMUsage struct {
+	PromptTokens     int32 `json:"prompt_tokens"`
+	CompletionTokens int32 `json:"completion_tokens"`
+	TotalTokens      int   `json:"total_tokens"`
 }
 
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+type OpenAILLMResponse struct {
+	ID      string            `json:"id"`
+	Object  string            `json:"object"`
+	Created int64             `json:"created"`
+	Model   string            `json:"model"`
+	Choices []OpenAILLMChoice `json:"choices"`
+	Usage   OpenAILLMUsage    `json:"usage"`
 }
 
-// ProxyOllamaChat godoc
-// @Summary Proxy a chat request to Ollama
+// ProxyOpenAIChat godoc
+// @Summary Proxy a chat completion request to OpenAI Compatible endpoint
 // @Schemes
-// @Description Proxy a chat request to the Ollama API.
+// @Description Proxy a chat completion request to the OpenAI API.
 // @Tags Proxy
 // @Accept json
 // @Produce json
-// @Param request body OllamaChatRequest true "Ollama Chat Request"
+// @Param request body ChatCompletionRequest true "OpenAI Chat Completion Request"
 // @Success 200 {object} object
 // @Failure 401 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Security BearerAuth
-// @Router /api/chat [post]
-func (s *Service) ProxyOllamaChat(c echo.Context) error {
+// @Router v1/embeddings [post]
+func (s *Service) ProxyOpenAIChat(c echo.Context) error {
 	var err error
 	var jsonBody []byte
 
@@ -61,14 +61,14 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "User not authenticated"})
 	}
 
-	var req OllamaChatRequest
+	var req ChatCompletionRequest
 	if err = c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 	}
 
 	model, err := s.db.GetModelByProxyModelID(c.Request().Context(), database.GetModelByProxyModelIDParams{
-		ProxyModelID:   req.Model,
-		UserID: userID,
+		ProxyModelID: req.Model,
+		UserID:       userID,
 	})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Model not found"})
@@ -95,42 +95,64 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Provider not found for model"})
 	}
 
-	// Only allow Ollama providers for this endpoint
-	if llm.ProviderType(provider.Type) != llm.ProviderOllama {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports Ollama providers"})
+	// Only allow OpenAI providers for this endpoint
+	if llm.ProviderType(provider.Type) != llm.ProviderOpenAI {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports OpenAI providers"})
 	}
 
-	// Build Ollama request structure
-	ollamaReq := make(map[string]interface{})
-	ollamaReq["model"] = model.ProviderModelID
-	ollamaReq["messages"] = req.Messages
-	ollamaReq["stream"] = req.Stream
+	decodedEncryptionKey, err := base64.StdEncoding.DecodeString(s.cfg.EncryptionKey)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to decode encryption key"})
+	}
 
-	// Add think parameter if specified
-	if req.Think {
-		ollamaReq["think"] = true
+	if len(decodedEncryptionKey) != 32 {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Encryption key must be 32 bytes long after base64 decoding"})
+	}
+
+	decryptedAPIKey, err := encryption.Decrypt(decodedEncryptionKey, connection.EncryptedApiKey)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to decrypt API key"})
+	}
+
+	apiKey := string(decryptedAPIKey)
+
+	openAIReq := make(map[string]any)
+	openAIReq["model"] = model.ProviderModelID
+	openAIReq["stream"] = req.Stream
+
+	openAIReq["messages"] = req.Messages
+
+	if req.Tools != nil {
+		toolsBytes, err := json.Marshal(req.Tools)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to marshal tools"})
+		}
+		var toolsData any
+		if err := json.Unmarshal(toolsBytes, &toolsData); err != nil {
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to unmarshal tools"})
+		}
+		openAIReq["tools"] = toolsData
 	}
 
 	// Marshal the request body to JSON
-	jsonBody, err = json.Marshal(ollamaReq)
+	jsonBody, err = json.Marshal(openAIReq)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to marshal request body"})
 	}
 
-	requestURL := provider.BaseUrl + "/api/chat"
-	log.Printf("Proxying Ollama request to: %s", requestURL)
+	requestURL := provider.BaseUrl + "/chat/completions"
+	log.Printf("Proxying OpenAI request to: %s", requestURL)
 	proxyReq, err := http.NewRequest("POST", requestURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to create proxy request"})
 	}
 
 	proxyReq.Header.Set("Content-Type", "application/json")
-	// Note: Ollama typically doesn't require Authorization header
+	proxyReq.Header.Set("Authorization", "Bearer "+apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(proxyReq)
 	if err != nil {
-		log.Printf("Error sending proxy request to Ollama: %v", err)
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to send proxy request"})
 	}
 	defer resp.Body.Close()
@@ -152,11 +174,12 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 				if _, writeErr := c.Response().Write(buf[:n]); writeErr != nil {
 					// Log the conversation even if there's a write error to the client
 					go func() {
-						_, logErr := s.db.CreateConversationLog(context.Background(), database.CreateConversationLogParams{
+						_, logErr := s.db.CreateLog(context.Background(), database.CreateLogParams{
 							UserID:          userID,
 							ModelID:         model.ID,
 							RequestPayload:  json.RawMessage(jsonBody),
 							ResponsePayload: json.RawMessage(responseBody.Bytes()),
+							Type:            "llm",
 						})
 						if logErr != nil {
 							log.Printf("Error logging conversation (write error path): %v", logErr)
@@ -172,11 +195,12 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 			if err != nil {
 				// Log the conversation even if there's a read error from the proxy
 				go func() {
-					_, logErr := s.db.CreateConversationLog(context.Background(), database.CreateConversationLogParams{
+					_, logErr := s.db.CreateLog(context.Background(), database.CreateLogParams{
 						UserID:          userID,
 						ModelID:         model.ID,
 						RequestPayload:  json.RawMessage(jsonBody),
 						ResponsePayload: json.RawMessage(responseBody.Bytes()),
+						Type:            "llm",
 					})
 					if logErr != nil {
 						log.Printf("Error logging conversation (read error path): %v", logErr)
@@ -185,39 +209,32 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 				return err
 			}
 		}
-		// After streaming is complete, parse the full response body for token counts
-		var finalOllamaResp OllamaResponse
-		var promptTokens int
-		var completionTokens int
-
-		if err := json.Unmarshal(responseBody.Bytes(), &finalOllamaResp); err == nil {
-			promptTokens = int(finalOllamaResp.PromptEvalCount)
-			completionTokens = int(finalOllamaResp.EvalCount)
-		} else {
-			log.Printf("Error unmarshaling final Ollama streaming response for token counts: %v", err)
-		}
-
 		// Log the conversation after successful streaming
 		go func() {
-			pt, err := safeIntToInt64(promptTokens)
-			if err != nil {
-				log.Printf("Error converting promptTokens: %v", err)
-				return
-			}
-			ct, err := safeIntToInt64(completionTokens)
-			if err != nil {
-				log.Printf("Error converting completionTokens: %v", err)
-				return
+			var finalOpenAIResp OpenAILLMResponse
+			promptTokens := 0
+			completionTokens := 0
+
+			if err := json.Unmarshal(responseBody.Bytes(), &finalOpenAIResp); err == nil {
+				promptTokens = int(finalOpenAIResp.Usage.PromptTokens)
+				completionTokens = int(finalOpenAIResp.Usage.CompletionTokens)
+			} else {
+				log.Printf("Error unmarshaling final OpenAI streaming response for token counts: %v", err)
 			}
 
-			_, logErr := s.db.CreateConversationLog(context.Background(), database.CreateConversationLogParams{
+			pt := int64(promptTokens)
+
+			ct := int64(completionTokens)
+
+			_, logErr := s.db.CreateLog(context.Background(), database.CreateLogParams{
 				UserID:           userID,
 				ModelID:          model.ID,
 				RequestPayload:   json.RawMessage(jsonBody),
 				ResponsePayload:  json.RawMessage(responseBody.Bytes()),
 				PromptTokens:     pgtype.Int8{Int64: pt, Valid: true},
 				CompletionTokens: pgtype.Int8{Int64: ct, Valid: true},
-				ConnectionID:     connection.ID,
+				ConnectionID:     model.ConnectionID,
+				Type:             "llm",
 			})
 			if logErr != nil {
 				log.Printf("Error logging conversation (streaming success path): %v", logErr)
@@ -230,40 +247,39 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to read proxy response body"})
 		}
 
-		log.Printf("Raw Ollama non-streaming response: %s", string(respBody))
-		var data interface{}
+		log.Printf("OpenAI API Response Status: %d", resp.StatusCode)
+		log.Printf("OpenAI API Response Body: %s", string(respBody))
+
+		var data any
 		if err := json.Unmarshal(respBody, &data); err != nil {
+			log.Printf("Failed to unmarshal OpenAI proxy response: %v, Raw Body: %s", err, string(respBody))
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to unmarshal proxy response"})
 		}
 
-		var ollamaResp OllamaResponse
-		var promptTokens int
-		var completionTokens int
+		var openAIResp OpenAILLMResponse
+		promptTokens := 0
+		completionTokens := 0
 
-		if err := json.Unmarshal(respBody, &ollamaResp); err == nil {
-			promptTokens = int(ollamaResp.PromptEvalCount)
-			completionTokens = int(ollamaResp.EvalCount)
+		if err := json.Unmarshal(respBody, &openAIResp); err == nil {
+			promptTokens = int(openAIResp.Usage.PromptTokens)
+			completionTokens = int(openAIResp.Usage.CompletionTokens)
+		} else {
+			log.Printf("Error unmarshaling final OpenAI streaming response for token counts: %v", err)
 		}
 
-		pt, err := safeIntToInt64(promptTokens)
-		if err != nil {
-			log.Printf("Error converting promptTokens: %v", err)
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to process tokens"})
-		}
-		ct, err := safeIntToInt64(completionTokens)
-		if err != nil {
-			log.Printf("Error converting completionTokens: %v", err)
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to process tokens"})
-		}
+		pt := int64(promptTokens)
 
-		_, logErr := s.db.CreateConversationLog(context.Background(), database.CreateConversationLogParams{
+		ct := int64(completionTokens)
+
+		_, logErr := s.db.CreateLog(context.Background(), database.CreateLogParams{
 			UserID:           userID,
 			ModelID:          model.ID,
 			RequestPayload:   json.RawMessage(jsonBody),
 			ResponsePayload:  json.RawMessage(respBody),
 			PromptTokens:     pgtype.Int8{Int64: pt, Valid: true},
 			CompletionTokens: pgtype.Int8{Int64: ct, Valid: true},
-			ConnectionID:     connection.ID,
+			ConnectionID:     model.ConnectionID,
+			Type:             "llm",
 		})
 		if logErr != nil {
 			log.Printf("Error logging conversation (non-streaming success path): %v", logErr)

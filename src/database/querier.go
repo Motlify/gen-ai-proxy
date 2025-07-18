@@ -11,10 +11,10 @@ import (
 )
 
 type Querier interface {
-	CountConversationLogs(ctx context.Context, arg CountConversationLogsParams) (int64, error)
+	CountLogs(ctx context.Context, arg CountLogsParams) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (ApiKey, error)
 	CreateConnection(ctx context.Context, arg CreateConnectionParams) (CreateConnectionRow, error)
-	CreateConversationLog(ctx context.Context, arg CreateConversationLogParams) (CreateConversationLogRow, error)
+	CreateLog(ctx context.Context, arg CreateLogParams) (CreateLogRow, error)
 	CreateModel(ctx context.Context, arg CreateModelParams) (Model, error)
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (CreateProviderRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -35,7 +35,7 @@ type Querier interface {
 	ListAPIKeys(ctx context.Context, userID pgtype.UUID) ([]ListAPIKeysRow, error)
 	ListConnections(ctx context.Context, userID pgtype.UUID) ([]ListConnectionsRow, error)
 	ListConnectionsByProviderID(ctx context.Context, arg ListConnectionsByProviderIDParams) ([]Connection, error)
-	ListConversationLogs(ctx context.Context, arg ListConversationLogsParams) ([]ListConversationLogsRow, error)
+	ListLogs(ctx context.Context, arg ListLogsParams) ([]ListLogsRow, error)
 	ListModels(ctx context.Context, userID pgtype.UUID) ([]Model, error)
 	ListProviders(ctx context.Context, userID pgtype.UUID) ([]Provider, error)
 	SoftDeleteConnection(ctx context.Context, arg SoftDeleteConnectionParams) error
@@ -43,7 +43,6 @@ type Querier interface {
 	SoftDeleteProvider(ctx context.Context, arg SoftDeleteProviderParams) error
 	UpdateAPIKey(ctx context.Context, arg UpdateAPIKeyParams) (ApiKey, error)
 	UpdateAPIKeyLastUsed(ctx context.Context, id pgtype.UUID) error
-	UpdateConnection(ctx context.Context, arg UpdateConnectionParams) (UpdateConnectionRow, error)
 	UpdateModel(ctx context.Context, arg UpdateModelParams) (Model, error)
 }
 

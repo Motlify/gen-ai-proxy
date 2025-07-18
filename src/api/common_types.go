@@ -12,13 +12,13 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-
+// OpenAI Compatible LLM Request
 type ChatCompletionRequest struct {
-	Model        string                `json:"model"`
-	ConnectionID string                `json:"connection_id"`
+	Model        string                  `json:"model"`
+	ConnectionID string                  `json:"connection_id"`
 	Messages     []ChatCompletionMessage `json:"messages"`
-	Stream       bool                  `json:"stream,omitempty"`
-	Tools        interface{}           `json:"tools,omitempty"`
+	Stream       bool                    `json:"stream,omitempty"`
+	Tools        any                     `json:"tools,omitempty"`
 }
 
 type ChatCompletionMessage struct {
@@ -26,7 +26,15 @@ type ChatCompletionMessage struct {
 	Content string `json:"content"`
 }
 
+// OpenAI Compatible Embedding Request
 
+type EmbeddingRequest struct {
+	Input          string `json:"input"`
+	Model          string `json:"model"`
+	EncodingFormat string `json:"encoding_format"`
+}
+
+// API
 type Provider struct {
 	ID      pgtype.UUID `json:"id"`
 	Name    string      `json:"name"`
@@ -37,20 +45,11 @@ type Provider struct {
 type Model struct {
 	ID              pgtype.UUID `json:"id"`
 	ConnectionID    pgtype.UUID `json:"connection_id"`
-	ProxyModelID    string      `json:"proxy_model_id"`
 	ProviderModelID string      `json:"provider_model_id"`
+	ProxyModelID    string      `json:"proxy_model_id"`
 	Thinking        bool        `json:"thinking"`
 	ToolsUsage      bool        `json:"tools_usage"`
 	PriceInput      float64     `json:"price_input"`
 	PriceOutput     float64     `json:"price_output"`
-}
-
-type ModelUpdate struct {
-	ConnectionID    pgtype.UUID `json:"connection_id"`
-	ProxyModelID    string      `json:"proxy_model_id"`
-	ProviderModelID string      `json:"provider_model_id"`
-	Thinking        bool        `json:"thinking"`
-	ToolsUsage      bool        `json:"tools_usage"`
-	PriceInput      float64     `json:"price_input"`
-	PriceOutput     float64     `json:"price_output"`
+	Type            string      `json:"type"`
 }

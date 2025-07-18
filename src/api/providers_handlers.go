@@ -1,13 +1,13 @@
 package api
 
 import (
-	"net/http"
 	"log"
+	"net/http"
 
 	"gen-ai-proxy/src/database"
-	"github.com/labstack/echo/v4"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/labstack/echo/v4"
 )
 
 // CreateProvider godoc
@@ -28,7 +28,7 @@ func (s *Service) CreateProvider(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "User not authenticated"})
 	}
 
-	var reqMap map[string]interface{}
+	var reqMap map[string]any
 	if err := c.Bind(&reqMap); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 	}
@@ -67,8 +67,6 @@ func (s *Service) CreateProvider(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, resp)
 }
-
-
 
 // ListProviders godoc
 // @Summary List all providers

@@ -41,7 +41,6 @@ import (
 // @description Enter your username and password to get a token.
 // @security      BearerAuth
 
-
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, relying on environment variables")
@@ -163,7 +162,7 @@ type Template struct {
 }
 
 // Render renders a template document
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *Template) Render(w io.Writer, name string, data any, c echo.Context) error {
 	log.Printf("Attempting to render template: %s", name)
 	err := t.templates.ExecuteTemplate(w, name, data)
 	if err != nil {

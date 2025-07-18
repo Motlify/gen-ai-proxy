@@ -10,14 +10,13 @@ import (
 	"gen-ai-proxy/src/database"
 	"gen-ai-proxy/src/models"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/labstack/echo/v4"
 )
 
 const (
 	userContextKey = "userID"
 )
-
 
 func APIKeyAuthMiddleware(db *database.Queries) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -57,7 +56,6 @@ func APIKeyAuthMiddleware(db *database.Queries) echo.MiddlewareFunc {
 	}
 }
 
-
 func JWTAuthMiddleware(jwtSecret []byte) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -73,7 +71,7 @@ func JWTAuthMiddleware(jwtSecret []byte) echo.MiddlewareFunc {
 
 			tokenString := parts[1]
 
-			token, err := jwt.ParseWithClaims(tokenString, &models.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+			token, err := jwt.ParseWithClaims(tokenString, &models.JwtCustomClaims{}, func(token *jwt.Token) (any, error) {
 				return jwtSecret, nil
 			})
 

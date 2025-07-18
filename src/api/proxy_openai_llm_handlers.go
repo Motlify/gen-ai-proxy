@@ -51,7 +51,7 @@ type OpenAILLMResponse struct {
 // @Failure 401 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Security BearerAuth
-// @Router v1/embeddings [post]
+// @Router /v1/chat/completions [post]
 func (s *Service) ProxyOpenAIChat(c echo.Context) error {
 	var err error
 	var jsonBody []byte
@@ -98,6 +98,10 @@ func (s *Service) ProxyOpenAIChat(c echo.Context) error {
 	// Only allow OpenAI providers for this endpoint
 	if llm.ProviderType(provider.Type) != llm.ProviderOpenAI {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports OpenAI providers"})
+	}
+
+	if model.Type != "llm" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports LLM models"})
 	}
 
 	decodedEncryptionKey, err := base64.StdEncoding.DecodeString(s.cfg.EncryptionKey)

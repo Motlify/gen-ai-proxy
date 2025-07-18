@@ -86,6 +86,15 @@ export const createModelFormHtml = `
                    class="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
         </div>
         <div class="mb-4">
+            <label for="model_type" class="block text-sm font-medium text-gray-300">Model Type</label>
+            <select id="model_type" name="type" required
+                   class="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="">Select a type</option>
+                <option value="llm">LLM</option>
+                <option value="embedding">Embedding</option>
+            </select>
+        </div>
+        <div class="mb-4">
             <label for="model_price_input" class="block text-sm font-medium text-gray-300">Price Input</label>
             <input type="number" step="0.000001" id="model_price_input" name="price_input"
                    class="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">

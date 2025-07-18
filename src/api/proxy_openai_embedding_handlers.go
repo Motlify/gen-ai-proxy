@@ -36,19 +36,19 @@ type OpenAIEmbeddingResponse struct {
 	Usage  OpenAIEmbeddingUsage `json:"usage"`
 }
 
-// ProxyOpenAIChat godoc
+// ProxyOpenAIEmbedding godoc
 // @Summary Proxy embedding request to OpenAI Compatible endpoint
 // @Schemes
 // @Description Proxy embedding request to the OpenAI API.
 // @Tags Proxy
 // @Accept json
 // @Produce json
-// @Param request body ChatCompletionRequest true "OpenAI Embedding Request"
+// @Param request body EmbeddingRequest true "OpenAI Embedding Request"
 // @Success 200 {object} object
 // @Failure 401 {object} api.ErrorResponse
 // @Failure 500 {object} api.ErrorResponse
 // @Security BearerAuth
-// @Router /v1/chat/completions [post]
+// @Router /v1/embeddings [post]
 func (s *Service) ProxyOpenAIEmbedding(c echo.Context) error {
 	var err error
 	var jsonBody []byte
@@ -94,6 +94,10 @@ func (s *Service) ProxyOpenAIEmbedding(c echo.Context) error {
 
 	if llm.ProviderType(provider.Type) != llm.ProviderOpenAI {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports OpenAI providers"})
+	}
+
+	if model.Type != "embedding" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports embedding models"})
 	}
 
 	decodedEncryptionKey, err := base64.StdEncoding.DecodeString(s.cfg.EncryptionKey)

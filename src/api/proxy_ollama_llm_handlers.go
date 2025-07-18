@@ -100,6 +100,10 @@ func (s *Service) ProxyOllamaChat(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports Ollama providers"})
 	}
 
+	if model.Type != "llm" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "This endpoint only supports LLM models"})
+	}
+
 	// Build Ollama request structure
 	ollamaReq := make(map[string]any)
 	ollamaReq["model"] = model.ProviderModelID

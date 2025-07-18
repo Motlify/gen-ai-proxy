@@ -70,5 +70,6 @@ func (s *Service) GetModelFromDB(ctx context.Context, modelID pgtype.UUID, userI
 		ToolsUsage:      dbModel.ToolsUsage,
 		PriceInput:      priceInput,
 		PriceOutput:     priceOutput,
+		Type:            dbModel.Type,
 	}, nil
 }

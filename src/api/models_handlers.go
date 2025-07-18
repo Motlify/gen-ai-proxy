@@ -60,6 +60,10 @@ func (s *Service) CreateModel(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "connection_id is required"})
 	}
 
+	if req.Type == "" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "type is required"})
+	}
+
 	connectionID, err := uuid.Parse(req.ConnectionID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid Connection ID"})
@@ -104,6 +108,7 @@ func (s *Service) CreateModel(c echo.Context) error {
 		ToolsUsage:      createdModel.ToolsUsage,
 		PriceInput:      priceInputFloat.Float64,
 		PriceOutput:     priceOutputFloat.Float64,
+		Type:            createdModel.Type,
 	}
 
 	return c.JSON(http.StatusCreated, resp)
@@ -208,11 +213,20 @@ func (s *Service) ListModels(c echo.Context) error {
 
 	respModels := make([]Model, len(dbModels))
 	for i, m := range dbModels {
-		model, err := s.GetModelFromDB(c.Request().Context(), m.ID, userID)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "failed to retrieve model from DB: " + err.Error()})
+		priceInputFloat, _ := m.PriceInput.Float64Value()
+		priceOutputFloat, _ := m.PriceOutput.Float64Value()
+
+		respModels[i] = Model{
+			ID:              m.ID,
+			ConnectionID:    m.ConnectionID,
+			ProviderModelID: m.ProviderModelID,
+			ProxyModelID:    m.ProxyModelID,
+			Thinking:        m.Thinking,
+			ToolsUsage:      m.ToolsUsage,
+			PriceInput:      priceInputFloat.Float64,
+			PriceOutput:     priceOutputFloat.Float64,
+			Type:            m.Type,
 		}
-		respModels[i] = model
 	}
 	return c.JSON(http.StatusOK, respModels)
 }

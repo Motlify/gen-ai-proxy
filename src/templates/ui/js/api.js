@@ -133,6 +133,7 @@ export const handleCreateModel = async (event) => {
     const price_output = parseFloat(document.getElementById('model_price_output').value);
     const thinking = document.getElementById('model_thinking').checked;
     const tools_usage = document.getElementById('model_tools_usage').checked;
+    const type = document.getElementById('model_type').value;
     const token = localStorage.getItem('jwt_token');
 
     const modelData = {
@@ -142,7 +143,8 @@ export const handleCreateModel = async (event) => {
         price_input: isNaN(price_input) ? 0 : price_input,
         price_output: isNaN(price_output) ? 0 : price_output,
         thinking,
-        tools_usage
+        tools_usage,
+        type
     };
 
     try {

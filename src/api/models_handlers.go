@@ -1,6 +1,8 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,6 +64,19 @@ func (s *Service) CreateModel(c echo.Context) error {
 
 	if req.Type == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "type is required"})
+	}
+
+	// Check if model with the same proxy_model_id already exists for this user
+	_, err = s.db.GetModelByProxyModelID(c.Request().Context(), database.GetModelByProxyModelIDParams{
+		ProxyModelID: req.ProxyModelID,
+		UserID:       userID,
+	})
+	if err == nil {
+		return c.JSON(http.StatusConflict, ErrorResponse{Error: fmt.Sprintf("Model with proxy_model_id '%s' already exists for this user", req.ProxyModelID)})
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		// Handle unexpected errors from the database
+		log.Printf("Error checking for existing model: %v", err)
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Error checking for existing model"})
 	}
 
 	connectionID, err := uuid.Parse(req.ConnectionID)

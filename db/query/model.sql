@@ -1,5 +1,5 @@
 -- name: GetModelByProxyModelID :one
-SELECT * FROM models WHERE proxy_model_id = $1 AND user_id = $2;
+SELECT * FROM models WHERE proxy_model_id = $1 AND user_id = $2 AND deleted_at IS NULL LIMIT 1;
 
 -- name: CreateModel :one
 INSERT INTO models (
@@ -18,7 +18,7 @@ INSERT INTO models (
 ) RETURNING *;
 
 -- name: GetModel :one
-SELECT * FROM models WHERE id = $1 AND user_id = $2;
+SELECT * FROM models WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL;
 
 -- name: ListModels :many
 SELECT * FROM models WHERE user_id = $1 AND deleted_at IS NULL;
